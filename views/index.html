@@ -1,0 +1,478 @@
+{% extends "templates.html" %}
+{% block head %}
+<style>
+@import url(https://fonts.googleapis.com/css?family=Lato:100);
+
+.blurry-text {
+  display: inline-block;
+  color: transparent;
+  text-shadow: 0 0 12px rgba(0,0,0,0.7);
+    -webkit-touch-callout: none; /* iOS Safari */
+        -webkit-user-select: none; /* Safari */
+             -khtml-user-select: none; /* Konqueror HTML */
+                    -moz-user-select: none; /* Old versions of Firefox */
+                            -ms-user-select: none; /* Internet Explorer/Edge */
+                                        user-select: none; /* Non-prefixed version, currently
+                                                                                                supported by Chrome, Edge, Opera and Firefox */
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background-color: salmon;
+  color: #fff;
+  font-size: 100%;
+  overflow: hidden;
+}
+
+.container {
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  height: 100%;
+  padding: 2em;
+}
+
+textarea {
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  background-color: transparent;
+  border: 0;
+  color: #fff;
+  display: block;
+  font-family: 'Lato';
+  font-size: 3rem;
+  font-weight:900;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  outline: 0;
+  width: 100%;
+}
+textarea::-webkit-input-placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+textarea:-moz-placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+textarea::-moz-placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+textarea:-ms-input-placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Lato';
+  font-weight:900;
+}
+
+a {
+  -moz-transition: border 0.2s;
+  -o-transition: border 0.2s;
+  -webkit-transition: border 0.2s;
+  transition: border 0.2s;
+  color: #fff;
+  border-bottom: 1px solid #fff;
+  display: inline-block;
+  text-decoration: none;
+}
+a:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+
+
+
+ .iconDetails {
+    margin-left:-30px;
+    float:left;
+    height:auto;
+    width:120px;style
+
+ }
+
+ .container2 {
+    width:100%;
+      height:auto;
+        padding:1%;
+
+ }
+
+ h4 {
+       margin:0px;
+ }
+
+ #search-head {
+    background-image: linear-gradient(to top, rgba(255,0,0,0),rgba(255,0,0,0.95));
+ }
+
+ .add-form{
+    background-image: linear-gradient(to top, rgba(255,0,0,0), rgba(255,0,0,1));
+ }
+
+
+
+.leaflet-popup {
+  z-index: 9999;
+  color:black;
+  font-family: 'Lato';
+}
+.leaflet-popup-content-wrapper .leaflet-popup-content {
+  background: rgba(0,0,0,0)
+}
+
+.leaflet-popup-tip-container {
+
+}
+
+
+.dimmer {
+    display: none;
+        background: #000;
+            opacity: 0.5;
+                position: fixed;
+                    top: 0;
+                        left: 0;
+                            width: 100%;
+                                height: 100%;
+                                    z-index: 100;
+                                    
+}
+
+
+</style>
+
+<link rel=preconnect href="https://api.mapbox.com"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+  integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+  crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+    integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+    crossorigin=""></script>
+
+{% endblock %}
+{% block content %}
+
+<div class="dimmer"></div>
+
+<svg id="spinner" class="spinner" style="position:absolute; z-index: 999;top:50%; left:50%;" width="65px" height="65px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+  <circle class="path" fill="none" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle>
+</svg>
+
+
+<div id="search-head" style="width: 100%; position:absolute; z-index: 100; pointer-events: none;">
+<div class="container">
+    <div class='container2'>
+      <img src='static/wagetrackerlogo.png' class='iconDetails'></img>
+    </div>
+    <div style='margin-left:100px;'>
+      <h1 style="font-size:4rem;">PayLeak</h1>
+      <h3 style="font-size:1rem">Enter location to check real wages or click on map to add your own.</h3>
+      </br>
+    </div>
+  <textarea name="search" style="pointer-events: auto;" value="" rows="1" placeholder="Washington DC">Washington DC</textarea>
+</div>
+</div>
+
+<div style="height:100%; z-index:1" id="map"></div>
+
+<div style="color:black;" class="modal fade" id="helpModal" tabindex="-1" role="dialog" aria-labelledby="helpModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div style="z-index: 999" class="modal-content">
+      <div style="" class="modal-body">
+        <div class="container">
+          <div class="" style="font-weight:bold">
+              <div class='container2'>
+                <img style="filter:invert(100%);" src='static/wagetrackerlogo.png' class='iconDetails'></img>
+              </div>
+              <div style='margin-left:100px;'>
+                <h1 style="font-size:4rem;">PayLeak</h1>
+                <h3 style="font-size:1rem">Leaking real wages from real people</h3>
+                </br>
+              </div>
+          </div>
+
+          <div class="" style="font-weight:bold">
+                <p>PayLeak is a crowdsourced map where people anonymously share their jobs and salaries.</p>
+                <p>By open sourcing salary information we can help close the income gap through dismantling salary-taboo. Salary sharing can not only help other people find higher-paying jobs but can also increase wages.</p>
+
+                <h4>Click on the map to start contributing</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div style="color:black;" class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div style="z-index: 999" class="modal-content">
+      <div style="" class="modal-body">
+        <h5 class="modal-title" id="addModalLabel">Add Job</h5>
+
+          <form id="nl-form" class="nl-form text-center" method="POST" action="/add_job">
+            I worked at 
+            <input required type="text" value="" name="job" placeholder="work, position" data-subline="For example: <em> Los Angeles</em> or <em> New York</em>"/ style="width:20rem;">
+            for
+            <input required type="number" value="" name="pay" max="500" min="0.0" step="0.01" placeholder="7.25" data-subline="For example: <em> Los Angeles</em> or <em> New York</em>" style="width:7rem;"/>
+            $/hr
+
+            <input id="latlong" name="location" type="text" value="" hidden>
+            <input id="zoomLevel" type="text" name="zoom" hidden>
+
+            </br>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Upload Job</button>
+
+          </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}
+{% block script %}
+<script>
+</script>
+
+<script>
+const loc = null;
+const indexLng = "{{ lng }}"
+const indexLat = "{{ lat }}"
+const indexZoom = "{{ zoom }}"
+
+if (indexLng == 0.0 && indexLat == 0.0){
+  $("#helpModal").modal()      
+  var map = L.map('map', {
+    center: [40.737, -73.923],
+    zoom: 13,
+    preferCanvas: true,
+  });
+  L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+        maxZoom: 18,
+        minZoom: 10,
+        id: 'mapbox/streets-v11',
+        tileSize: 512,
+        zoomOffset: -1,
+        accessToken: 'pk.eyJ1IjoiaWFua2ltMjAwMiIsImEiOiJjanEyYTBieXEwMmZpNDNwYWo0N3oyNXZvIn0.IoFbojKxCxbxz6wfEQecrg'
+  }).addTo(map);
+
+
+  navigator.geolocation.getCurrentPosition(success, error, options);
+  
+ }
+else{
+
+  var map = L.map('map', {
+    center: [parseFloat(indexLat), parseFloat(indexLng)],
+    zoom: parseFloat(indexZoom),
+    preferCanvas: true
+  });
+  L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+        maxZoom: 18,
+        minZoom:10,
+        id: 'mapbox/streets-v11',
+        tileSize: 512,
+        zoomOffset: -1,
+        accessToken: 'pk.eyJ1IjoiaWFua2ltMjAwMiIsImEiOiJjanEyYTBieXEwMmZpNDNwYWo0N3oyNXZvIn0.IoFbojKxCxbxz6wfEQecrg'
+  }).addTo(map);
+}
+
+  var renderer = L.canvas({padding: 0.5})
+  var lookup = new Map();
+  var colorLookup = {
+      5 : "#0011FF",
+      6 : "#4000FF",
+      7 : "#8400FF",
+      8 : "#BB00FF",
+      9 : "#FF00FF",
+      10 : "#FF00E6",
+      11 : "#FF00BB",
+      12 : "#FF00A6",
+      13 : "#FF0090",
+      14 : "#FF007B",
+      15 : "#FF0073",
+      16 : "#FF0059",
+      17 : "#FF004C",
+      18 : "#FF0040",
+      19 : "#FF0000",
+    };
+
+
+  function plant(ev){
+    var bounds = map.getBounds(),
+        northeast = bounds.getNorthEast(),
+        southwest = bounds.getSouthWest(), 
+        distance = map.distance(southwest, northeast),
+        distanceFromCenter = distance/2;
+
+      var center =  map.getCenter()
+      var zoom = map.getZoom()
+
+      $.ajax({
+        type: "GET",
+        url: '/get_jobs',
+        data: {
+          lat : center.lat,
+          lng : center.lng,
+          distance : distance
+        },
+        success: function(data, err){
+          if(data.jobs != null){
+          for(var i=0; i < data.jobs.length; i++){
+            if(!lookup.has(data.jobs[i]._id)){
+              console.log()
+              var color = "#BB00FF"
+                if(colorLookup[Math.round(data.jobs[i].wage)] != null){
+                    color = colorLookup[(Math.round(data.jobs[i].wage))]
+                  }
+                else{
+                    color = colorLookup[19]
+                  }
+              
+              if("{{ hide }}" === "True"){
+                  var datapop= L.popup().setContent(`
+                      <h1>`+data.jobs[i].jobName+`</h1><h3><div class="blurry-text">`+data.jobs[i].wage.toFixed(2)+`</div>$/hr</h3> <hr/> <h6>To view full wage data, click on the map and add your own wage first</h6>
+
+                      <p style="font-weight: bold;">Something wrong? <a href="/report?id=`+data.jobs[i]._id+ "&lng=" +center.lng+ "&lat=" +center.lat+ "&zoom=" +zoom+`">report this post</a></p>`)
+              }else {
+                  var datapop= L.popup().setContent(`
+                      <h1>`+data.jobs[i].jobName+`</h1><h3><div style="display: inline-block;">`+data.jobs[i].wage.toFixed(2)+`</div>$/hr</h3>
+
+                      <hr/>
+                      <p style="font-weight: bold;">Something wrong? <a href="/report?id=`+data.jobs[i]._id+ "&lng=" +center.lng+ "&lat=" +center.lat+ "&zoom=" +zoom+`">report this post</a></p>`)
+              }
+              
+              var latlng = new L.LatLng(data.jobs[i].location.coordinates[1], data.jobs[i].location.coordinates[0]);
+              var circleMakrer = L.circleMarker(latlng, {
+                  renderer : renderer,
+                  color:color,
+                  radius:25,
+                }).addTo(map).bindPopup(datapop);
+              lookup.set(data.jobs[i]._id, null);
+            }
+          }
+       }
+      }
+    });
+
+    }
+  
+  map.on('moveend', plant)
+  plant(null);
+  var options = {
+      enableHighAccuracy: true,
+      timeout: 5000,
+      maximumAge: 0
+  };
+
+  function success(pos) {
+      var crd = pos.coords;
+      map.setView(new L.LatLng(crd.latitude, crd.longitude))
+  }
+
+  function error(err) {
+      console.warn(`ERROR(${err.code}): ${err.message}`);
+  }
+
+
+   $("#findme").click(function(){
+       navigator.geolocation.getCurrentPosition((pos) => {
+        var crd = pos.coords;
+        map.flyTo(new L.LatLng(crd.latitude, crd.longitude),16)
+
+         }, error, options);
+    })
+  
+  $("#help").click(function(){
+
+    $("#helpModal").modal()      
+    })
+
+
+  var popup = L.popup();
+if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)  ) {
+  map.on("click", e=>{
+    $("#latlong").val(e.latlng.lat + "," + e.latlng.lng)
+    $("#zoomLevel").val(map.getZoom())
+    $("#addModal").modal();
+  })
+}
+else{
+  map.on("click", e =>{
+      popup
+        .setLatLng(e.latlng)
+        .setContent(`
+          <form style="z-index:1000" id="nl-form" class="nl-form text-center" method="POST" action="/add_job">
+            I worked at
+             <input required  type="text" value="" name="job" placeholder="work, position" data-subline="For example: <em> Los Angeles</em> or <em> New York</em>"/ style="width:100%;">
+            for
+            <input required type="number" value="" name="pay" max="500" min="0.0" step="0.01" placeholder="7.25" data-subline="For example: <em> Los Angeles</em> or <em> New York</em>" style="width:7rem;"/>
+            $/hr
+
+            <input type="text" name="location" value="`+e.latlng.lat + "," + e.latlng.lng+`" hidden>
+            <input type="text" name="zoom" value="` + map.getZoom() +`" hidden>
+
+            <button type="submit" class="btn btn-primary">Upload Job</button>
+            </form>
+        `)
+        .openOn(map);
+  })
+}
+
+$("#spinner").hide()
+$(".dimmer").hide()
+
+// A minimal search box like this does requires automatic focus in order for someone to find it.
+
+var input = document.querySelector('[name=search]');
+var loadTimeout;
+
+// Look ma, no jQuery!
+input.focus();
+input.addEventListener('keydown', keyHandler, false);
+
+function keyHandler(e) {
+  // Having a second delay to prevent too many AJAX requests
+  if(loadTimeout) clearTimeout(loadTimeout);
+  loadTimeout = setTimeout(loadData, 1000);
+}
+
+function loadData() {
+  var query = input.value;
+$("#spinner").show()
+$(".dimmer").show()
+ $.ajax({
+        type: "GET",
+        url: '/get_coords',
+        data: {
+          q : query,
+        },
+        success: function(data, err){
+           $("#spinner").hide()
+           $(".dimmer").hide()
+
+
+            if(data.ok){
+                var obj = JSON.parse(data.data)
+                var latlng = obj.results[0].locations[0].latLng
+                map.setView(new L.LatLng(latlng.lat, latlng.lng));
+
+            }
+            else{
+                console.log(data)
+         
+            }
+
+        }
+    });
+ 
+}
+</script>
+{% endblock %}
